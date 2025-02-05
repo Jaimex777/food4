@@ -12,6 +12,8 @@
         .restaurant-card, .menu-item { width: 90%; max-width: 400px; margin: 10px 0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); background-color: #fff; text-align: center; cursor: pointer; }
         .restaurant-image, .menu-image { width: 100%; height: 200px; object-fit: cover; }
         .form-container input, .form-container button, .form-container textarea { margin: 10px; padding: 10px; width: 90%; max-width: 400px; }
+        #loginForm { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .delete-btn { background-color: red; color: white; padding: 5px; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -28,11 +30,12 @@
         </div>
     </div>
 
-    <div id="loginForm" style="display:none;">
+    <div id="loginForm">
         <h2>Iniciar Sesión</h2>
         <input type="text" id="username" placeholder="Usuario">
         <input type="password" id="password" placeholder="Contraseña">
         <button onclick="login()">Entrar</button>
+        <button onclick="closeLogin()">Cancelar</button>
     </div>
 
     <script>
@@ -43,13 +46,17 @@
             document.getElementById('loginForm').style.display = 'block';
         }
 
+        function closeLogin() {
+            document.getElementById('loginForm').style.display = 'none';
+        }
+
         function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
             if ((username === 'italiano' && password === '1234') || (username === 'mexicano' && password === '1234')) {
                 currentUser = username;
-                alert('Inicio de sesión exitoso');
+                closeLogin();
                 showMenu(currentUser);
             } else {
                 alert('Usuario o contraseña incorrectos');
@@ -71,6 +78,7 @@
                                 <h3>${product.name}</h3>
                                 <p>Precio: ${product.price}</p>
                                 <p>${product.description || ''}</p>
+                                ${currentUser === restaurant ? `<button class="delete-btn" onclick="deleteProduct('${restaurant}', ${product.id})">Eliminar</button>` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -112,7 +120,14 @@
                 body: formData
             });
 
-            alert('Producto agregado exitosamente.');
+            showMenu(restaurant);
+        }
+
+        async function deleteProduct(restaurant, productId) {
+            await fetch(`${API_URL}/products/${restaurant}/${productId}`, {
+                method: 'DELETE'
+            });
+
             showMenu(restaurant);
         }
     </script>
