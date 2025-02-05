@@ -50,29 +50,46 @@
             if ((username === 'italiano' && password === '1234') || (username === 'mexicano' && password === '1234')) {
                 currentUser = username;
                 alert('Inicio de sesión exitoso');
+                showMenu(currentUser);
             } else {
                 alert('Usuario o contraseña incorrectos');
             }
         }
 
-        function showMenu(restaurant) {
-            const container = document.createElement('div');
-            container.innerHTML = `
-                <h1>Menú de ${restaurant.charAt(0).toUpperCase() + restaurant.slice(1)}</h1>
-                <div class="menu-container" id="menu-${restaurant}"></div>
-                ${currentUser === restaurant ? `
-                <h2>Agregar Nuevo Producto</h2>
-                <div class="form-container">
-                    <input type="text" id="productName" placeholder="Nombre del producto">
-                    <input type="text" id="productPrice" placeholder="Precio">
-                    <textarea id="productDescription" placeholder="Descripción"></textarea>
-                    <input type="file" id="productImage" accept="image/*">
-                    <button onclick="addProduct('${restaurant}')">Agregar Producto</button>
-                </div>` : ''}
-                <button onclick="window.location.reload()">Volver a la Lista de Restaurantes</button>
-            `;
-            document.body.innerHTML = '';
-            document.body.appendChild(container);
+        async function showMenu(restaurant) {
+            try {
+                const response = await fetch(`${API_URL}/products/${restaurant}`);
+                const products = await response.json();
+
+                const container = document.createElement('div');
+                container.innerHTML = `
+                    <h1>Menú de ${restaurant.charAt(0).toUpperCase() + restaurant.slice(1)}</h1>
+                    <div class="menu-container">
+                        ${products.map(product => `
+                            <div class="menu-item">
+                                <img src="${product.image_url}" alt="${product.name}" class="menu-image">
+                                <h3>${product.name}</h3>
+                                <p>Precio: ${product.price}</p>
+                                <p>${product.description || ''}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${currentUser === restaurant ? `
+                    <h2>Agregar Nuevo Producto</h2>
+                    <div class="form-container">
+                        <input type="text" id="productName" placeholder="Nombre del producto">
+                        <input type="text" id="productPrice" placeholder="Precio">
+                        <textarea id="productDescription" placeholder="Descripción"></textarea>
+                        <input type="file" id="productImage" accept="image/*">
+                        <button onclick="addProduct('${restaurant}')">Agregar Producto</button>
+                    </div>` : ''}
+                    <button onclick="window.location.reload()">Volver a la Lista de Restaurantes</button>
+                `;
+                document.body.innerHTML = '';
+                document.body.appendChild(container);
+            } catch (error) {
+                console.error('Error al cargar el menú:', error);
+            }
         }
 
         async function addProduct(restaurant) {
