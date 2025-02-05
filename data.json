@@ -1,0 +1,38 @@
+{
+  "restaurants": [
+    {
+      "name": "italiano",
+      "products": [
+        {
+          "id": 1,
+          "name": "Pizza Margherita",
+          "price": "10.00",
+          "image_url": "https://source.unsplash.com/400x200/?pizza"
+        },
+        {
+          "id": 2,
+          "name": "Pasta Carbonara",
+          "price": "12.00",
+          "image_url": "https://source.unsplash.com/400x200/?pasta"
+        }
+      ]
+    },
+    {
+      "name": "mexicano",
+      "products": [
+        {
+          "id": 3,
+          "name": "Tacos al Pastor",
+          "price": "8.00",
+          "image_url": "https://source.unsplash.com/400x200/?tacos"
+        },
+        {
+          "id": 4,
+          "name": "Burrito",
+          "price": "9.00",
+          "image_url": "https://source.unsplash.com/400x200/?burrito"
+        }
+      ]
+    }
+  ]
+}
