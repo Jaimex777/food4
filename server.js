@@ -1,79 +1,78 @@
 
 const express = require('express');
+const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const bodyParser = require('body-parser');
 const cors = require('cors');
-const multer = require('multer');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname)));
-app.use('/uploads', express.static('uploads'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const DATA_FILE = './data.json';
-
-// Configuración de multer para guardar imágenes
+// Configuración de almacenamiento para multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        const dir = './uploads';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir);
+        }
+        cb(null, dir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
+
 const upload = multer({ storage: storage });
 
-function readData() {
-    if (fs.existsSync(DATA_FILE)) {
-        const data = fs.readFileSync(DATA_FILE);
-        return JSON.parse(data);
-    } else {
-        return { restaurants: [] };
-    }
-}
+// Simulación de base de datos en memoria
+let data = {
+    italiano: [],
+    mexicano: []
+};
 
-function saveData(data) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Obtener productos de un restaurante
+app.get('/api/products/:restaurant', (req, res) => {
+    const { restaurant } = req.params;
+    res.json(data[restaurant] || []);
 });
 
-app.get('/api/products/:restaurant', (req, res) => {
-    const data = readData();
-    const restaurant = req.params.restaurant;
-    const restaurantData = data.restaurants.find(r => r.name === restaurant);
+// Agregar un nuevo producto
+app.post('/api/products', upload.single('image'), (req, res) => {
+    const { restaurant, name, price, description } = req.body;
+    const image_url = req.file ? `/uploads/${req.file.filename}` : '';
 
-    if (restaurantData) {
-        res.json(restaurantData.products);
+    const newProduct = {
+        id: Date.now(),
+        name,
+        price,
+        description,
+        image_url
+    };
+
+    if (!data[restaurant]) {
+        data[restaurant] = [];
+    }
+    data[restaurant].push(newProduct);
+
+    res.json({ message: 'Producto agregado', product: newProduct });
+});
+
+// Eliminar un producto
+app.delete('/api/products/:restaurant/:productId', (req, res) => {
+    const { restaurant, productId } = req.params;
+    if (data[restaurant]) {
+        data[restaurant] = data[restaurant].filter(p => p.id !== parseInt(productId));
+        res.json({ message: 'Producto eliminado' });
     } else {
         res.status(404).json({ message: 'Restaurante no encontrado' });
     }
 });
 
-app.post('/api/products', upload.single('image'), (req, res) => {
-    const { restaurant, name, price, description } = req.body;
-    const image_url = req.file ? `/uploads/${req.file.filename}` : '/uploads/default.png';
-
-    const data = readData();
-    let restaurantData = data.restaurants.find(r => r.name === restaurant);
-    if (!restaurantData) {
-        restaurantData = { name: restaurant, products: [] };
-        data.restaurants.push(restaurantData);
-    }
-
-    const newProduct = { id: Date.now(), name, price, description, image_url };
-    restaurantData.products.push(newProduct);
-    saveData(data);
-
-    res.json({ message: 'Producto agregado', product: newProduct });
-});
-
-app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
